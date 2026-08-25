@@ -38,10 +38,13 @@ function emptyContextEvent(sessionID: string): ContextEvent {
   return { sessionID, system: [], messages: [], tools: {} }
 }
 
+/** Minimal shape of the tool object passed to ctx.tool.transform's draft.add. */
+type RegisteredTool = { name: string; options?: { codemode?: boolean; permission?: string } }
+
 type PluginHarness = {
   ctx: Plugin.Context
   storage: MemoryStorage
-  registered: string[]
+  registered: RegisteredTool[]
   contextCallback: () => ((event: ContextEvent) => Promise<void> | void) | undefined
 }
 
@@ -50,14 +53,14 @@ type PluginHarness = {
  * the "context" hook callback so tests can drive it with fake events.
  */
 function makePluginContext(options: Record<string, unknown>, storage = new MemoryStorage()): PluginHarness {
-  const registered: string[] = []
+  const registered: RegisteredTool[] = []
   let contextCallback: ((event: ContextEvent) => Promise<void> | void) | undefined
   const ctx = {
     options,
     storage,
     tool: {
-      transform: async (callback: (draft: { add: (tool: { name: string }) => void }) => void) => {
-        callback({ add: (tool) => registered.push(tool.name) })
+      transform: async (callback: (draft: { add: (tool: RegisteredTool) => void }) => void) => {
+        callback({ add: (tool) => registered.push(tool) })
         return { dispose: async () => {} }
       },
     },
@@ -136,7 +139,9 @@ describe("context injection", () => {
     const harness = makePluginContext({})
     await plugin.setup(harness.ctx)
 
-    expect(harness.registered).toEqual(["todowrite"])
+    expect(harness.registered.map((t) => t.name)).toEqual(["todowrite"])
+    // The tool must stay in the native tool list, not sink into the CodeMode catalog.
+    expect(harness.registered[0]?.options?.codemode).toBe(false)
     expect(harness.contextCallback()).toBeDefined()
   })
 
@@ -152,7 +157,9 @@ describe("context injection", () => {
     const harness = makePluginContext({ injectEveryRound: false })
     await plugin.setup(harness.ctx)
 
-    expect(harness.registered).toEqual(["todowrite"])
+    expect(harness.registered.map((t) => t.name)).toEqual(["todowrite"])
+    // The tool must stay in the native tool list, not sink into the CodeMode catalog.
+    expect(harness.registered[0]?.options?.codemode).toBe(false)
     expect(harness.contextCallback()).toBeUndefined()
   })
 

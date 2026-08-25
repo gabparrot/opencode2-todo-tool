@@ -32,12 +32,15 @@ function mockContext(storage: MemoryStorage) {
   return { storage } as unknown as Plugin.Context
 }
 
-function makeToolContext(options: Record<string, unknown>, registered: string[]) {
+/** Minimal shape of the tool object passed to ctx.tool.transform's draft.add. */
+type RegisteredTool = { name: string; options?: { codemode?: boolean; permission?: string } }
+
+function makeToolContext(options: Record<string, unknown>, registered: RegisteredTool[]) {
   return {
     options,
     tool: {
-      transform: async (callback: (draft: { add: (tool: { name: string }) => void }) => void) => {
-        callback({ add: (tool) => registered.push(tool.name) })
+      transform: async (callback: (draft: { add: (tool: RegisteredTool) => void }) => void) => {
+        callback({ add: (tool) => registered.push(tool) })
         return { dispose: async () => {} }
       },
     },
@@ -202,6 +205,8 @@ describe("todowrite execute", () => {
     const storage = new MemoryStorage()
     const ctx = mockContext(storage)
     const tool = registerTodoWrite(ctx)
+    // The registered tool must be exposed as a native tool, not folded into the CodeMode catalog.
+    expect(tool.options?.codemode).toBe(false)
     const inputTodos: Todo[] = [
       { content: "Write tests", status: "completed", priority: "high", activeForm: "writing" },
       { content: "Run tests", status: "in_progress", priority: "medium" },
@@ -240,16 +245,19 @@ describe("todowrite execute", () => {
 
 describe("plugin registration", () => {
   test("registers todowrite when enabled or unset, and skips when disabled", async () => {
-    const enabled: string[] = []
-    const disabled: string[] = []
-    const defaulted: string[] = []
+    const enabled: RegisteredTool[] = []
+    const disabled: RegisteredTool[] = []
+    const defaulted: RegisteredTool[] = []
 
     await plugin.setup(makeToolContext({ enabled: true }, enabled))
     await plugin.setup(makeToolContext({ enabled: false }, disabled))
     await plugin.setup(makeToolContext({}, defaulted))
 
-    expect(enabled).toEqual(["todowrite"])
-    expect(disabled).toEqual([])
-    expect(defaulted).toEqual(["todowrite"])
+    expect(enabled.map((t) => t.name)).toEqual(["todowrite"])
+    expect(disabled.map((t) => t.name)).toEqual([])
+    expect(defaulted.map((t) => t.name)).toEqual(["todowrite"])
+    // The tool must stay in the native tool list, not sink into the CodeMode catalog.
+    expect(enabled[0]?.options?.codemode).toBe(false)
+    expect(defaulted[0]?.options?.codemode).toBe(false)
   })
 })

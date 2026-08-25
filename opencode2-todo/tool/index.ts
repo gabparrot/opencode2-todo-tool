@@ -11,7 +11,7 @@ export function registerTodoWrite(ctx: Plugin.Context) {
       "Manage a structured todo list for the current session. Replaces the full list each call. Use it to track progress during multi-step work and keep todo statuses current. Statuses: pending, in_progress (exactly one at a time), completed, cancelled. Priorities: high, medium, low.",
     input: inputSchema,
     output: outputSchema,
-    options: { permission: "todowrite" },
+    options: { codemode: false, permission: "todowrite" },
     async execute(input: unknown, toolCtx: { sessionID: string }) {
       const result = validateTodos(input)
       if (!result.ok) {

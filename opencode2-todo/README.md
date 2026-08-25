@@ -17,29 +17,67 @@ OpenCode V2 plugin that restores the `todowrite` tool and shows a live todo list
 
 ## Install
 
-### From npm
+Use the **plural `plugins`** key in your opencode2 V2 config (`opencode.json` or `.opencode/opencode.json`). The singular `plugin` key is legacy and will **not** load this plugin.
 
-After the package is published, install it in the directory `opencode2` runs from so it resolves from `node_modules`:
+The plugin registers `todowrite` as a native tool internally (`codemode: false`), so it appears in every agent's tool list automatically. V2 has no per-agent `tools` allowlist — no agent config change is required.
 
-```sh
-npm install opencode2-todo
+### Immediate method (no publish needed)
+
+This is the proven way to load the plugin before it is published. Point `plugins` at the **absolute path** of the TypeScript entrypoint:
+
+```json
+{ "plugins": ["/absolute/path/to/opencode2-todo-tool/opencode2-todo/src/index.ts"] }
 ```
 
-Then add it to the `plugins` array in your opencode config (`opencode.json` or `.opencode/opencode.json`):
+Requirements:
+
+- Run `bun install` in the plugin folder (`opencode2-todo/`) first so `node_modules/@opencode-ai/plugin` is present. opencode resolves that peer when it imports the entrypoint.
+- The `tui: true` flag only affects the optional TUI sidebar. The server-side `todowrite` tool works whether or not the TUI is running.
+
+opencode2 transpiles the TypeScript entry at runtime — no build step. Alternatively, drop or copy the plugin folder into a `plugins/` subdirectory of your config dir; opencode2 auto-discovers `.ts`/`.js` files there.
+
+### From npm (after the package is resolvable)
+
+The bare package name and the object form work **only** after opencode can resolve `opencode2-todo` — published to npm, installed into opencode's package cache (for example `opencode2 plugin add opencode2-todo` once published), or a local `bun link` / cache install. Until then, load fails and the [health check](#health-check) shows `status: "failed"`.
 
 ```json
 { "plugins": ["opencode2-todo"] }
 ```
 
-### Local development
-
-Clone the repo and reference the package by absolute path:
+Object form with options is also supported:
 
 ```json
-{ "plugins": ["/absolute/path/to/opencode2-todo-tool/opencode2-todo"] }
+{ "plugins": [{ "package": "opencode2-todo", "options": { "enabled": true, "injectEveryRound": true } }] }
 ```
 
-`opencode2` loads the TypeScript entry directly (`src/index.ts`), so the runtime must be able to resolve and transpile it — no build step is required.
+## Troubleshooting
+
+Plugin load failures are **non-fatal**: opencode keeps running, but `todowrite` will not be registered. Make those failures loud.
+
+### Server log
+
+opencode writes its server log to `$XDG_DATA_HOME/opencode/log/opencode.log` (default `~/.local/share/opencode/log/opencode.log`). On a machine running the `beta` channel it may be `~/.local/share/opencode-v2/opencode/log/opencode.log`. Plugin load failures are logged there and surfaced non-fatally.
+
+### Health check
+
+```sh
+opencode2 api get /api/plugin
+```
+
+Scope the request to your project directory with the header `x-opencode-directory: /path/to/project` if needed. Look for the entry `"id": "opencode2.todo"`:
+
+- `status: "active"` — the plugin loaded and `todowrite` is registered as a native tool.
+- `status: "failed"` with an `error` field — load/setup failed. Read the `error` and the server log.
+
+Common failures: a bare package name that is not installed (`NpmInstallFailedError`), or a schema error in the plugin module.
+
+If `todowrite` still is not callable after `status: "active"`, confirm the tool options include `codemode: false`. Without that flag, the tool is hidden behind the CodeMode `execute` tool and never appears in the model's native tool list.
+
+## Verification
+
+After enabling, run the [health check](#health-check) above. Confirm `opencode2.todo` appears with `status: "active"`. A `failed` status means a load error — read the `error` field and the server log.
+
+To confirm the tool is callable, ask your agent to use `todowrite` and verify it invokes the `todowrite` function. The tool appears in every agent's tool list automatically (V2 has no per-agent `tools` allowlist). No agent config change is required.
 
 ## Fresh per-round todo injection
 
