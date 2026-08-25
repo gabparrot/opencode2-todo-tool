@@ -1,7 +1,8 @@
 import type { Plugin } from "@opencode-ai/plugin"
 import { countTodos, formatTodos } from "./format"
-import { parseTodo, inputSchema, outputSchema, type Todo } from "./schema"
+import { inputSchema, outputSchema } from "./schema"
 import { saveTodos } from "./store"
+import { validateTodos } from "./validate"
 
 export function registerTodoWrite(ctx: Plugin.Context) {
   return {
@@ -12,13 +13,13 @@ export function registerTodoWrite(ctx: Plugin.Context) {
     output: outputSchema,
     options: { permission: "todowrite" },
     async execute(input: unknown, toolCtx: { sessionID: string }) {
-      const todos = readTodos(input)
-      if (!todos) {
+      const result = validateTodos(input)
+      if (!result.ok) {
         return {
-          content:
-            "todowrite requires a `todos` array of items with content, status, and priority. The session list was not changed.",
+          content: "Invalid todowrite input: " + result.error,
         }
       }
+      const todos = result.todos
       await saveTodos(ctx, toolCtx.sessionID, todos)
       return {
         output: { todos },
@@ -27,16 +28,4 @@ export function registerTodoWrite(ctx: Plugin.Context) {
       }
     },
   }
-}
-
-function readTodos(input: unknown): Todo[] | undefined {
-  if (!input || typeof input !== "object" || !("todos" in input)) return
-  if (!Array.isArray(input.todos)) return
-  const todos = input.todos.flatMap((item) => {
-    const todo = parseTodo(item)
-    return todo ? [todo] : []
-  })
-  if (input.todos.length > 0 && todos.length === 0) return
-  if (todos.length !== input.todos.length) return
-  return todos
 }
