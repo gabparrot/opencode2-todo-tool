@@ -4,6 +4,13 @@
   "description": "Restore the V2-removed todowrite tool and a TUI sidebar list for OpenCode sessions",
   "type": "module",
   "license": "MIT",
+  "keywords": ["opencode", "opencode-plugin", "opencode2", "plugin", "todo", "tasks", "ai", "agent"],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/gabparrot/opencode2-todo-tool.git"
+  },
+  "homepage": "https://github.com/gabparrot/opencode2-todo-tool#readme",
+  "bugs": "https://github.com/gabparrot/opencode2-todo-tool/issues",
   "exports": {
     ".": "./src/index.ts",
     "./tui": "./src/tui.tsx"
