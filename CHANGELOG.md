@@ -5,6 +5,13 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.2]
+
+### Fixed
+
+- The TUI never loaded the sidebar: V2's TUI only auto-imports UI plugins from `plugins/tui/` directories and ignores the config `plugins` array for UI parts. Documented the required bridge shim and hardened `src/index.ts` to exit cleanly when a TUI host imports it (its setup previously threw on the missing server context).
+- Pointing a config entry at the plugin directory fails server-side on current builds; README now pins install to the file path explicitly.
+
 ## [0.2.1]
 
 ### Fixed

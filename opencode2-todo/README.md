@@ -50,6 +50,25 @@ Object form with options is also supported:
 { "plugins": [{ "package": "opencode2-todo", "options": { "enabled": true, "injectEveryRound": true } }] }
 ```
 
+## TUI sidebar setup (required)
+
+The TUI loads UI plugins **only** from `plugins/tui/` directories — it never reads the config `plugins` array for UI parts. The server-side tool alone does not render the sidebar. To show the live todo panel, bridge the TUI entry into your config directory:
+
+```sh
+mkdir -p ~/.config/opencode-v2/plugins/tui
+cat > ~/.config/opencode-v2/plugins/tui/opencode2-todo.tsx <<'SHIM'
+export { default } from "/absolute/path/to/opencode2-todo-tool/opencode2-todo/src/tui.tsx"
+SHIM
+```
+
+Then fully restart your TUI application (TUI plugins load at startup; new sessions are not enough). The panel renders in the session sidebar and reads todos from the transcript.
+
+Notes:
+
+- The config `plugins` entry (server side) stays as documented above — pointing at `src/index.ts`. The TUI also imports that file while scanning config plugins; since 0.2.2 its setup detects a TUI host context and exits cleanly instead of throwing.
+- Pointing the config entry at the package **directory** instead of the file breaks server loading on current builds (`ResolveMessage: Cannot find module …`); keep the file path.
+- For npm installs after publishing, replace the shim's absolute path with `"opencode2-todo/tui"` resolved from wherever your runtime can reach it, or keep the repo checkout.
+
 ## Troubleshooting
 
 Plugin load failures are **non-fatal**: opencode keeps running, but `todowrite` will not be registered. Make those failures loud.

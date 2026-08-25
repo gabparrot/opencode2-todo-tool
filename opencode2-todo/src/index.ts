@@ -8,6 +8,9 @@ export default Plugin.define({
   tui: true,
   async setup(ctx) {
     if (ctx.options.enabled === false) return
+    // The TUI also imports this entry from the config "plugins" array, where a
+    // server Context is not provided; only the ./tui export claims UI slots.
+    if (!ctx.tool || !ctx.session) return
     await ctx.tool.transform((draft) => draft.add(registerTodoWrite(ctx)))
     if (ctx.options.injectEveryRound === false) return
     await ctx.session.hook("context", async (event) => {

@@ -1,19 +1,9 @@
 {
   "name": "opencode2-todo",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Restore the V2-removed todowrite tool and a TUI sidebar list for OpenCode sessions",
   "type": "module",
   "license": "MIT",
-  "keywords": [
-    "opencode",
-    "opencode-plugin",
-    "opencode2",
-    "plugin",
-    "todo",
-    "tasks",
-    "ai",
-    "agent"
-  ],
   "keywords": [
     "opencode",
     "opencode-plugin",
