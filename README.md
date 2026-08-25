@@ -101,6 +101,20 @@ Each call replaces the full session list. An empty `todos: []` clears it.
 - **Requires opencode2** with TypeScript plugin loading (no pre-compiled bundle is shipped).
 - **Store not yet consumed directly** — the server writes a full per-session `todos/<sessionID>` store, but the current sidebar does not consume it directly yet; it sees the same data via the transcript.
 
+## Verification
+
+- **Tests** — `bun test` from `opencode2-todo/`: **20 pass, 0 fail** (1 file
+  `test/todowrite.test.ts`, 44 assertions). Covers schema validation,
+  `formatTodos`, persistence round-trip/filtering, `todowrite` execute, and
+  plugin registration.
+- **Typecheck** — `bun typecheck` (tsc `--noEmit`): clean, exit 0.
+- **npm publish** — **not published.** `npm whoami` returned E401 (stale/invalid
+  token) and `npm publish` returned E404 (`opencode2-todo@0.1.0` not found). This
+  is the expected auth/permission failure — the unscoped E404 masks
+  "not authenticated / no publish permission". Version `0.1.0` is pending an npm
+  auth fix before it can be published.
+- Ecosystem listing next steps: see [docs/ECOSYSTEM.md](docs/ECOSYSTEM.md).
+
 ## License
 
 MIT
