@@ -41,6 +41,9 @@ function makeToolContext(options: Record<string, unknown>, registered: string[])
         return { dispose: async () => {} }
       },
     },
+    session: {
+      hook: async () => ({ dispose: async () => {} }),
+    },
   } as unknown as Plugin.Context
 }
 
