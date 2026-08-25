@@ -5,6 +5,12 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.3]
+
+### Fixed
+
+- The TUI bridge failed at import with `Cannot find module 'react/jsx-dev-runtime'`: Bun's runtime transpiler ignored the package tsconfig for externally imported `.tsx` files and fell back to React JSX. Fixed with an explicit `@jsxImportSource @opentui/solid` pragma at the top of the sidebar module. Verified end-to-end via headless import: module loads, setup claims the `sidebar.content` slot, JSX renders under a solid runtime.
+
 ## [0.2.2]
 
 ### Fixed
